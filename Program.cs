@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using InventoryManagment.Data;
+using InventoryManagment.Middleware;
 using InventoryManagment.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,9 +58,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseHttpsRedirection();
-app.UseRouting();
 
+app.UseHttpsRedirection();
+
+app.UseRouting();
+app.UseAuthentication();
+app.UseMiddleware<PasswordChangeEnforcementMiddleware>();
 app.UseAuthorization();
 
 app.MapStaticAssets();
