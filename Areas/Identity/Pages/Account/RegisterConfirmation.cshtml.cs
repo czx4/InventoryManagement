@@ -13,7 +13,11 @@ namespace InventoryManagment.Areas.Identity.Pages.Account
     {
         public IActionResult OnGet()
         {
-            return Page();
+            return RedirectToPage("Login");
+        }
+        public IActionResult OnPost()
+        {
+            return RedirectToPage("Login");
         }
     }
 }
