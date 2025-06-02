@@ -72,7 +72,43 @@ public class AdminPanelController:Controller
         createUserViewModel.AvailableRoles = await GetAvailableRolesForCurrentUser();
         return View(createUserViewModel);
     }
-    
+    [HttpGet]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+            return NotFound();
+        var roles = await _userManager.GetRolesAsync(user);
+        var model = new UserViewModel {Id = user.Id,Email = user.Email,Roles =roles};
+        return View(model);
+    }
+    [HttpPost,ActionName("DeleteUser")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteUserConfirmed(string id)
+    {
+        var deleteUser = await _userManager.FindByIdAsync(id);
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null || deleteUser == null) return NotFound();
+        
+        var currentUserRoles =await _userManager.GetRolesAsync(currentUser);
+        var deleteUserRoles =await _userManager.GetRolesAsync(deleteUser);
+
+        if (currentUserRoles.Contains("Admin"))
+        {
+            await _userManager.DeleteAsync(deleteUser);
+        }
+        else if (currentUserRoles.Contains("Manager") &&
+                 !deleteUserRoles.Contains("Admin") && 
+                 !deleteUserRoles.Contains("Manager"))
+        {
+            await _userManager.DeleteAsync(deleteUser);
+        }
+        else
+        {
+            TempData["Error"] = "You do not have permission to delete this user.";
+        }
+        return RedirectToAction("Index");
+    }
     private async Task<List<string>> GetAvailableRolesForCurrentUser()
     {
         var currentUser =await _userManager.GetUserAsync(User);
