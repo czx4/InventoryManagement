@@ -109,6 +109,74 @@ public class AdminPanelController:Controller
         }
         return RedirectToAction("Index");
     }
+    [HttpGet]
+    public async Task<IActionResult> EditUser(string? id)
+    {
+        if (id == null) return NotFound();
+        var user = await _userManager.FindByIdAsync(id);
+        var currentUser =await _userManager.GetUserAsync(User);
+        if (user == null||currentUser==null)
+            return NotFound();
+        if (await IsUserBlockedFromEditing(currentUser, user))
+            return Forbid();
+        var roles = await _userManager.GetRolesAsync(user);
+        var availableRoles = await GetAvailableRolesForCurrentUser();
+        var model = new EditUserViewModel {Id = user.Id,Email = user.Email,Roles =roles,AvailableRoles = availableRoles};
+        return View(model);
+    }
+
+    [HttpPost,ActionName("EditUser")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditUserConfirm(EditUserViewModel editUserViewModel)
+    {
+        var updatedUser = await _userManager.FindByIdAsync(editUserViewModel.Id);
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (updatedUser == null||currentUser==null) return NotFound();
+        if (await IsUserBlockedFromEditing(currentUser, updatedUser))
+            return Forbid();
+        var currentRoles = await _userManager.GetRolesAsync(updatedUser);
+        var allowedRoles = await GetAvailableRolesForCurrentUser();
+        var selectedRoles = editUserViewModel.Roles ?? new List<string>();
+
+//  Reject any roles that are not in the allowed list
+        if (selectedRoles.Except(allowedRoles).Any())
+        {
+            ModelState.AddModelError("Roles", "You tried to assign roles you're not authorized to set.");
+            editUserViewModel.AvailableRoles = allowedRoles;
+            return View(editUserViewModel);
+        }
+        //handle role change
+        var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
+        var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
+
+        if (rolesToAdd.Any())
+            await _userManager.AddToRolesAsync(updatedUser, rolesToAdd);
+        if (rolesToRemove.Any())
+            await _userManager.RemoveFromRolesAsync(updatedUser, rolesToRemove);
+        //handle password change
+        if (!string.IsNullOrEmpty(editUserViewModel.NewPassword))
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(updatedUser);
+            var result = await _userManager.ResetPasswordAsync(updatedUser, token, editUserViewModel.NewPassword);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+                return View(editUserViewModel);
+            }
+            // ✅ Automatically set MustChangePassword = true
+            updatedUser.MustChangePassword = true;
+            // You must update the user in the DB
+            await _userManager.UpdateAsync(updatedUser);
+        }
+
+        if (editUserViewModel.MustChangePassword)
+        {
+            updatedUser.MustChangePassword = true;
+            await _userManager.UpdateAsync(updatedUser);
+        }
+        return RedirectToAction("Index");
+    }
     private async Task<List<string>> GetAvailableRolesForCurrentUser()
     {
         var currentUser =await _userManager.GetUserAsync(User);
@@ -122,5 +190,15 @@ public class AdminPanelController:Controller
             return new List<string> { "Clerk" };
         }
         return new List<string>();
+    }
+    private async Task<bool> IsUserBlockedFromEditing(ApplicationUser currentUser, ApplicationUser targetUser)
+    {
+        var currentRoles = await _userManager.GetRolesAsync(currentUser);
+        var targetRoles = await _userManager.GetRolesAsync(targetUser);
+
+        bool currentIsNotAdmin = !currentRoles.Contains("Admin");
+        bool targetIsPrivileged = targetRoles.Any(r => r == "Admin" || r == "Manager");
+
+        return currentIsNotAdmin && targetIsPrivileged;
     }
 }
