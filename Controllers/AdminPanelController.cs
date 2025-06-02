@@ -72,7 +72,7 @@ public class AdminPanelController:Controller
         createUserViewModel.AvailableRoles = await GetAvailableRolesForCurrentUser();
         return View(createUserViewModel);
     }
-
+    
     private async Task<List<string>> GetAvailableRolesForCurrentUser()
     {
         var currentUser =await _userManager.GetUserAsync(User);

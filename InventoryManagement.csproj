@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>aspnet-InventoryManagment-7A0A4CCD-B8ED-4016-9FC7-040CA94F0324</UserSecretsId>
+        <RootNamespace>InventoryManagment</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
