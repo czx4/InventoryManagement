@@ -136,8 +136,8 @@ public class AdminPanelController:Controller
             return Forbid();
         var currentRoles = await _userManager.GetRolesAsync(updatedUser);
         var allowedRoles = await GetAvailableRolesForCurrentUser();
-        var selectedRoles = editUserViewModel.Roles ?? new List<string>();
-
+        var selectedRoles = editUserViewModel.Roles;
+        
 //  Reject any roles that are not in the allowed list
         if (selectedRoles.Except(allowedRoles).Any())
         {
@@ -145,6 +145,7 @@ public class AdminPanelController:Controller
             editUserViewModel.AvailableRoles = allowedRoles;
             return View(editUserViewModel);
         }
+        
         //handle role change
         var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
         var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
@@ -153,6 +154,8 @@ public class AdminPanelController:Controller
             await _userManager.AddToRolesAsync(updatedUser, rolesToAdd);
         if (rolesToRemove.Any())
             await _userManager.RemoveFromRolesAsync(updatedUser, rolesToRemove);
+        
+        bool mustBeUpdated = false; //determines if user has to be updated
         //handle password change
         if (!string.IsNullOrEmpty(editUserViewModel.NewPassword))
         {
@@ -161,19 +164,54 @@ public class AdminPanelController:Controller
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors)
-                    ModelState.AddModelError(string.Empty, error.Description);
+                    ModelState.AddModelError("NewPassword", error.Description);
+                editUserViewModel.AvailableRoles = allowedRoles;
                 return View(editUserViewModel);
             }
             // ✅ Automatically set MustChangePassword = true
             updatedUser.MustChangePassword = true;
             // You must update the user in the DB
-            await _userManager.UpdateAsync(updatedUser);
+            mustBeUpdated = true;
         }
-
+        //handle email change
+        if (!string.Equals(editUserViewModel.Email,updatedUser.Email,StringComparison.OrdinalIgnoreCase))
+        {
+            var setEmailResult = await _userManager.SetEmailAsync(updatedUser, editUserViewModel.Email);
+            if(!setEmailResult.Succeeded)
+            {
+                foreach (var error in setEmailResult.Errors)
+                    ModelState.AddModelError("Email",error.Description);
+                editUserViewModel.AvailableRoles = allowedRoles;
+                return View(editUserViewModel);
+            }
+            //handle username change
+            var setUsernameResult = await _userManager.SetUserNameAsync(updatedUser, editUserViewModel.Email);
+            if(!setUsernameResult.Succeeded)
+            {
+                foreach (var error in setUsernameResult.Errors)
+                    ModelState.AddModelError("Email", error.Description);
+                editUserViewModel.AvailableRoles = allowedRoles;
+                return View(editUserViewModel);
+            }
+            mustBeUpdated = true;
+        }
+        //handle the flag that the user must change password
         if (editUserViewModel.MustChangePassword)
         {
             updatedUser.MustChangePassword = true;
-            await _userManager.UpdateAsync(updatedUser);
+            mustBeUpdated = true;
+        }
+        //checks if user needs to be updated
+        if(mustBeUpdated)
+        {
+            var updateResult=await _userManager.UpdateAsync(updatedUser);
+            if (!updateResult.Succeeded)
+            {
+                foreach (var error in updateResult.Errors)
+                    ModelState.AddModelError(String.Empty, error.Description);
+                editUserViewModel.AvailableRoles = allowedRoles;
+                return View(editUserViewModel);
+            }
         }
         return RedirectToAction("Index");
     }
