@@ -10,4 +10,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         : base(options)
     {
     }
+    public DbSet<Product>Products { get; set; }
+
+    public DbSet<Category>Categories { get; set; }
+    public DbSet<Sale>Sales { get; set; }
+    public DbSet<SaleLineItem>SaleLineItems { get; set; }
+    public DbSet<Supplier>Suppliers { get; set; }
 }
