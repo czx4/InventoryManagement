@@ -1,4 +1,4 @@
-namespace InventoryManagment.Models;
+namespace InventoryManagment.ViewModels;
 
 public class UserViewModel
 {

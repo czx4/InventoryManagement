@@ -1,0 +1,64 @@
+@model InventoryManagment.ViewModels.SupplierDetailsViewModel
+
+@{
+    ViewBag.Title = "Supplier Details";
+    Layout = "_Layout";
+}
+
+<h2>Supplier Details</h2>
+
+<div class="mb-4">
+    <dl class="row">
+        <dt class="col-sm-2">Name</dt>
+        <dd class="col-sm-10">@Model.Name</dd>
+
+        <dt class="col-sm-2">Contact Name</dt>
+        <dd class="col-sm-10">@Model.ContactName</dd>
+
+        <dt class="col-sm-2">Email</dt>
+        <dd class="col-sm-10">@Model.Email</dd>
+
+        <dt class="col-sm-2">Phone</dt>
+        <dd class="col-sm-10">@Model.Phone</dd>
+
+        <dt class="col-sm-2">Address</dt>
+        <dd class="col-sm-10">@Model.Address</dd>
+    </dl>
+</div>
+
+<h3>Products Supplied</h3>
+@if (Model.Products != null && Model.Products.Any())
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>SKU</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var product in Model.Products)
+        {
+            <tr>
+                <td>@product.Name</td>
+                <td>@product.SKU</td>
+                <td>
+                    <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                        View Product
+                    </a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No products are associated with this supplier.</p>
+}
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Back to Suppliers</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit Supplier</a>
+</div>

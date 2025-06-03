@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace InventoryManagment.Models;
+namespace InventoryManagment.ViewModels;
 
 public class CreateUserViewModel
 {

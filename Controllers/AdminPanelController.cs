@@ -1,4 +1,5 @@
 using InventoryManagment.Models;
+using InventoryManagment.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,12 +10,10 @@ namespace InventoryManagment.Controllers;
 [Authorize(Roles = "Admin,Manager")]
 public class AdminPanelController:Controller
 {
-    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
     
     public AdminPanelController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
     {
-        _roleManager = roleManager;
         _userManager = userManager;
     }
     
