@@ -96,4 +96,50 @@ public class SuppliersController : Controller
             return View(csvm);
         }
     }
+
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var supplier =await _context.Suppliers.FindAsync(id);
+        if (supplier == null) return NotFound();
+        var model = new CreateSupplierViewModel
+        {
+            Id = supplier.Id,
+            Name = supplier.Name,
+            ContactName = supplier.ContactName,
+            Address = supplier.Address,
+            Email = supplier.Email,
+            Phone = supplier.Phone
+        };
+        return View(model);
+    }
+
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteSupplierConfirmed(int id)
+    {
+        var supplier =await _context.Suppliers.FindAsync(id);
+        if (supplier == null) return NotFound();
+        try
+        {
+            _context.Suppliers.Remove(supplier);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return View(new CreateSupplierViewModel
+            {
+                Id = supplier.Id,
+                Name = supplier.Name,
+                ContactName = supplier.ContactName,
+                Address = supplier.Address,
+                Email = supplier.Email,
+                Phone = supplier.Phone
+            });
+        }
+    }
 }

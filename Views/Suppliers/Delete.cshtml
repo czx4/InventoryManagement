@@ -1,18 +1,43 @@
-@model TModel
+@model InventoryManagment.ViewModels.CreateSupplierViewModel
 
 @{
-    Layout = null;
+    ViewBag.Title = "Delete Supplier";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
+<h2>Delete Supplier</h2>
 
-<html>
-<head>
-    <title>title</title>
-</head>
-<body>
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<h3>Are you sure you want to delete this Supplier?</h3>
 <div>
-      
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Contact Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>@Model.Id</td>
+            <td>@Model.Name</td>
+            <td>@Model.ContactName</td>
+            <td>@Model.Email</td>
+            <td>@Model.Phone</td>
+            <td>@Model.Address</td>
+        </tr>
+        </tbody>
+    </table>
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Delete Supplier" class="btn btn-danger"
+               onclick="return confirm('Are you sure you want to delete this Supplier?');"/>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    </form>
 </div>
-</body>
-</html>
