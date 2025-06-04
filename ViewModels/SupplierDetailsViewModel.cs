@@ -19,9 +19,3 @@ public class SupplierDetailsViewModel
 }
 
 // A minimal view‐model to represent each product in the Details view.
-public class ProductSummaryViewModel
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string? SKU { get; set; }
-}

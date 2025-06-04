@@ -2,28 +2,18 @@ using InventoryManagment.Data;
 using InventoryManagment.Models;
 using InventoryManagment.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagment.Controllers;
 
 [Authorize]
-public class SuppliersController : Controller
+public class SuppliersController(ApplicationDbContext context) : Controller
 {
-    private readonly ApplicationDbContext _context;
-    private readonly UserManager<ApplicationUser> _userManager;
-
-    public SuppliersController(ApplicationDbContext context,UserManager<ApplicationUser> userManager)
-    {
-        _context = context;
-        _userManager = userManager;
-    }
     // GET
     public async Task<IActionResult> Index()
     {
-        var supplierList = await _context.Suppliers
+        var supplierList = await context.Suppliers
             .OrderBy(s => s.Name)
             .Select(s => new SupplierListItemViewModel
             {
@@ -40,7 +30,7 @@ public class SuppliersController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id == null) return NotFound();
-        var supplier = await _context.Suppliers
+        var supplier = await context.Suppliers
             .Include(s => s.Products)
             .FirstOrDefaultAsync(s => s.Id == id);
         if (supplier == null) return NotFound();
@@ -86,8 +76,8 @@ public class SuppliersController : Controller
                 Address = csvm.Address
             };
 
-            _context.Suppliers.Add(supplier);
-            await _context.SaveChangesAsync();
+            context.Suppliers.Add(supplier);
+            await context.SaveChangesAsync();
 
             return RedirectToAction("Index");
         }
@@ -102,7 +92,7 @@ public class SuppliersController : Controller
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var supplier =await _context.Suppliers.FindAsync(id);
+        var supplier =await context.Suppliers.FindAsync(id);
         if (supplier == null) return NotFound();
         var model = new SupplierViewModel
         {
@@ -121,12 +111,12 @@ public class SuppliersController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteSupplierConfirmed(int id)
     {
-        var supplier =await _context.Suppliers.FindAsync(id);
+        var supplier =await context.Suppliers.FindAsync(id);
         if (supplier == null) return NotFound();
         try
         {
-            _context.Suppliers.Remove(supplier);
-            await _context.SaveChangesAsync();
+            context.Suppliers.Remove(supplier);
+            await context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
         catch (DbUpdateException ex)
@@ -148,7 +138,7 @@ public class SuppliersController : Controller
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> Edit(int id)
     {
-        var supplier =await _context.Suppliers.FindAsync(id);
+        var supplier =await context.Suppliers.FindAsync(id);
         if (supplier == null) return NotFound();
         var model = new SupplierViewModel
         {
@@ -162,13 +152,13 @@ public class SuppliersController : Controller
         return View(model);
     }
 
-    [HttpPost,ActionName("Edit")]
+    [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditConfirm(SupplierViewModel svm)
+    public async Task<IActionResult> Edit(SupplierViewModel svm)
     {
         if (!ModelState.IsValid) return View(svm);
-        var supplier = await _context.Suppliers.FindAsync(svm.Id);
+        var supplier = await context.Suppliers.FindAsync(svm.Id);
         if (supplier == null) return NotFound();
         try
         {
@@ -177,7 +167,7 @@ public class SuppliersController : Controller
             supplier.Email = svm.Email;
             supplier.Phone = svm.Phone;
             supplier.Address = svm.Address;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
         catch (DbUpdateException ex)

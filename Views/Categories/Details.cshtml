@@ -1,0 +1,55 @@
+@model InventoryManagment.ViewModels.CategoryDetailsViewModel
+
+@{
+    ViewBag.Title = "Category Details";
+    Layout = "_Layout";
+}
+
+<h2>Category Details</h2>
+
+<div class="mb-4">
+    <dl class="row">
+        <dt class="col-sm-2">Name</dt>
+        <dd class="col-sm-10">@Model.Name</dd>
+
+        <dt class="col-sm-2">Description</dt>
+        <dd class="col-sm-10">@Model.Description</dd>
+    </dl>
+</div>
+
+<h3>Products in Category</h3>
+@if (Model.Products != null && Model.Products.Any())
+{
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Product Name</th>
+        <th>SKU</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model.Products)
+    {
+    <tr>
+        <td>@product.Name</td>
+        <td>@product.SKU</td>
+        <td>
+            <a asp-controller="Products" asp-action="Details" asp-route-id="@product.Id">
+                View Product
+            </a>
+        </td>
+    </tr>
+    }
+    </tbody>
+</table>
+}
+else
+{
+<p class="text-muted">No products are associated with this category.</p>
+}
+
+<div class="mt-3">
+    <a asp-action="Index" class="btn btn-secondary">Back to Categories</a>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit Category</a>
+</div>
