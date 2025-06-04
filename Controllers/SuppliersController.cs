@@ -4,6 +4,7 @@ using InventoryManagment.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagment.Controllers;
@@ -64,14 +65,14 @@ public class SuppliersController : Controller
     [HttpGet]
     public  IActionResult Create()
     {
-        var model = new CreateSupplierViewModel();
+        var model = new SupplierViewModel();
         return View(model);
     }
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CreateSupplierViewModel csvm)
+    public async Task<IActionResult> Create(SupplierViewModel csvm)
     {
         if (!ModelState.IsValid) return View(csvm);
         try
@@ -103,7 +104,7 @@ public class SuppliersController : Controller
     {
         var supplier =await _context.Suppliers.FindAsync(id);
         if (supplier == null) return NotFound();
-        var model = new CreateSupplierViewModel
+        var model = new SupplierViewModel
         {
             Id = supplier.Id,
             Name = supplier.Name,
@@ -131,7 +132,7 @@ public class SuppliersController : Controller
         catch (DbUpdateException ex)
         {
             ModelState.AddModelError("", ex.Message);
-            return View(new CreateSupplierViewModel
+            return View(new SupplierViewModel
             {
                 Id = supplier.Id,
                 Name = supplier.Name,
@@ -140,6 +141,49 @@ public class SuppliersController : Controller
                 Email = supplier.Email,
                 Phone = supplier.Phone
             });
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var supplier =await _context.Suppliers.FindAsync(id);
+        if (supplier == null) return NotFound();
+        var model = new SupplierViewModel
+        {
+            Id = supplier.Id,
+            Name = supplier.Name,
+            ContactName = supplier.ContactName,
+            Address = supplier.Address,
+            Email = supplier.Email,
+            Phone = supplier.Phone
+        };
+        return View(model);
+    }
+
+    [HttpPost,ActionName("Edit")]
+    [Authorize(Roles = "Admin,Manager")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditConfirm(SupplierViewModel svm)
+    {
+        if (!ModelState.IsValid) return View(svm);
+        var supplier = await _context.Suppliers.FindAsync(svm.Id);
+        if (supplier == null) return NotFound();
+        try
+        {
+            supplier.Name = svm.Name;
+            supplier.ContactName = svm.ContactName;
+            supplier.Email = svm.Email;
+            supplier.Phone = svm.Phone;
+            supplier.Address = svm.Address;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("",ex.Message);
+            return View(svm);
         }
     }
 }

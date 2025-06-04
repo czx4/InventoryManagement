@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace InventoryManagment.ViewModels;
 
-public class CreateSupplierViewModel
+public class SupplierViewModel
 {
     public int Id { get; set; }
     [Required(ErrorMessage = "Supplier name is required.")]
