@@ -20,15 +20,8 @@ public class Product
     [DataType(DataType.Currency)]
     public decimal Price { get; set; }
 
-    [Required]
-    [Range(0, int.MaxValue)]
-    public int QuantityInStock { get; set; }
-
     [Range(0, int.MaxValue)]
     public int ReorderLevel { get; set; } // Alert threshold
-
-    [DataType(DataType.Date)]
-    public DateTime? ExpiryDate { get; set; }
 
     [DataType(DataType.Date)]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -43,4 +36,5 @@ public class Product
     public int SupplierId { get; set; }
     [ForeignKey(nameof(SupplierId))]
     public Supplier Supplier { get; set; }
+    public ICollection<Shipment> Shipments { get; set; }
 }

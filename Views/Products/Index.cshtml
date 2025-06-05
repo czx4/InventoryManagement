@@ -1,0 +1,74 @@
+@model IEnumerable<InventoryManagment.ViewModels.ProductListViewModel>
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.CodeAnalysis.Classification
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    ViewBag.Title = "Products";
+    Layout = "_Layout";
+    var user = User;
+    var isManagerOrAdmin = user.IsInRole("Manager") || user.IsInRole("Admin");
+}
+
+<h2>Products</h2>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search products..." />
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </div>
+</form>
+
+@if (isManagerOrAdmin)
+{
+    <a asp-action="Create" class="btn btn-primary mb-3">Create New Product</a>
+}
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>SKU</th>
+        <th>Price</th>
+        <th>Category</th>
+        <th>Supplier</th>
+        <th>Stock</th>
+        <th>Is the stock low</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr class="@(item.IsLowStock ? "bg-danger":null)" >
+            <td>@item.Name</td>
+            <td>@item.SKU</td>
+            <td>@item.Price.ToString("C")</td>
+            <td>@item.CategoryName</td>
+            <td>@item.SupplierName</td>
+            <td>@item.QuantityInStock</td>
+            <td>
+                @if (item.IsLowStock)
+                {
+                    <span>Yes</span>
+                }
+                else
+                {
+                    <span>No</span>
+                }
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                @if (isManagerOrAdmin)
+                {
+                    <span> | </span>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                    <span> | </span>
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

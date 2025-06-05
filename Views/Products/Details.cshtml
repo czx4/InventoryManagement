@@ -1,0 +1,85 @@
+@model InventoryManagment.ViewModels.ProductDetailsViewModel
+
+@{
+    ViewBag.Title = "Product Details";
+    Layout = "_Layout";
+}
+
+<h2>Product Details</h2>
+
+<div class="mb-4 @(Model.IsLowStock ? "bg-danger":null)">
+    <dl class="row">
+        <dt class="col-sm-3">Name</dt>
+        <dd class="col-sm-9">@Model.Name</dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
+
+        <dt class="col-sm-3">SKU</dt>
+        <dd class="col-sm-9">@Model.SKU</dd>
+
+        <dt class="col-sm-3">Price</dt>
+        <dd class="col-sm-9">@Model.Price.ToString("C")</dd>
+
+        <dt class="col-sm-3">Quantity In Stock</dt>
+        <dd class="col-sm-9">@Model.QuantityInStock</dd>
+
+        <dt class="col-sm-3">Reorder Level</dt>
+        <dd class="col-sm-9">@Model.ReorderLevel</dd>
+
+        <dt class="col-sm-3">Stock Low?</dt>
+        <dd class="col-sm-9">
+            @if (Model.IsLowStock)
+            {
+                <span class="text-danger">Yes</span>
+            }
+            else
+            {
+                <span class="text-success">No</span>
+            }
+        </dd>
+
+        <dt class="col-sm-3">Category</dt>
+        <dd class="col-sm-9">@Model.CategoryName</dd>
+
+        <dt class="col-sm-3">Supplier</dt>
+        <dd class="col-sm-9">@Model.SupplierName</dd>
+
+        <dt class="col-sm-3">Created At</dt>
+        <dd class="col-sm-9">@Model.CreatedAt.ToString("g")</dd>
+
+        <dt class="col-sm-3">Last Updated</dt>
+        <dd class="col-sm-9">@Model.LastUpdated?.ToString("g")</dd>
+    </dl>
+</div>
+
+<h4>Shipments</h4>
+@if (Model.Shipments != null && Model.Shipments.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Quantity</th>
+                <th>Received Date</th>
+                <th>Expiry Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var shipment in Model.Shipments)
+            {
+                <tr class="@(shipment.ExpiryDate.HasValue && shipment.ExpiryDate < DateTime.Now ? "table-danger" : "")">
+                    <td>@shipment.Quantity</td>
+                    <td>@shipment.ReceivedDate.ToString("d")</td>
+                    <td>@shipment.ExpiryDate?.ToString("d") ?? "N/A"</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No shipments recorded.</p>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-3">Back to Products</a>
+
