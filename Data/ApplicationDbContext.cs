@@ -11,7 +11,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
     }
     public DbSet<Product>Products { get; set; }
-
+    public DbSet<Shipment>Shipments { get; set; }
     public DbSet<Category>Categories { get; set; }
     public DbSet<Sale>Sales { get; set; }
     public DbSet<SaleLineItem>SaleLineItems { get; set; }

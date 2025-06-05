@@ -1,7 +1,9 @@
 using InventoryManagment.Data;
+using InventoryManagment.Models;
 using InventoryManagment.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryManagment.Controllers;
@@ -75,5 +77,56 @@ public class ProductsController(ApplicationDbContext context) : Controller
             }).ToList()
         };
         return View(viewMod);
+    }
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> Create()
+    {
+        var model =new ProductViewModel();
+        await PopulateDropdowns(model);
+        return View(model);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(ProductViewModel pvm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulateDropdowns(pvm);
+            return View(pvm);
+        }
+        try
+        {
+            var product = new Product
+            {
+                Name = pvm.Name,
+                Description = pvm.Description,
+                SKU = pvm.SKU,
+                Price = pvm.Price,
+                ReorderLevel = pvm.ReorderLevel,
+                CategoryId = pvm.CategoryId,
+                SupplierId = pvm.SupplierId
+            };
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("",ex.Message);
+            await PopulateDropdowns(pvm);
+            return View(pvm);
+        }
+    }
+    private async Task PopulateDropdowns(ProductViewModel model)
+    {
+        model.Categories = await context.Categories
+            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Name })
+            .ToListAsync();
+        model.Suppliers = await context.Suppliers
+            .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+            .ToListAsync();
     }
 }
