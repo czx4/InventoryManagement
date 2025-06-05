@@ -37,8 +37,8 @@
     <tbody>
     @foreach (var item in Model)
     {
-        <tr class="@(item.IsLowStock ? "bg-danger":null)" >
-            <td>@item.Name</td>
+        <tr>
+            <td class="@(item.IsLowStock ? "bg-danger":"")">@item.Name</td>
             <td>@item.SKU</td>
             <td>@item.Price.ToString("C")</td>
             <td>@item.CategoryName</td>

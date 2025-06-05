@@ -28,8 +28,10 @@ public class ProductViewModel
     [Required]
     [Display(Name = "Supplier")]
     public int SupplierId { get; set; }
-    public IEnumerable<SelectListItem> Categories { get; set; }
-    public IEnumerable<SelectListItem> Suppliers { get; set; }
+    public string? CategoryName { get; set; }
+    public string? SupplierName { get; set; }
+    public IEnumerable<SelectListItem>? Categories { get; set; }
+    public IEnumerable<SelectListItem>? Suppliers { get; set; }
 
 
 }

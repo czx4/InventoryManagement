@@ -86,9 +86,9 @@ public class ProductsController(ApplicationDbContext context) : Controller
         await PopulateDropdowns(model);
         return View(model);
     }
-
-    [HttpPost]
+    
     [Authorize(Roles = "Admin,Manager")]
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductViewModel pvm)
     {
@@ -118,6 +118,60 @@ public class ProductsController(ApplicationDbContext context) : Controller
             ModelState.AddModelError("",ex.Message);
             await PopulateDropdowns(pvm);
             return View(pvm);
+        }
+    }
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var product = await context.Products
+            .Include(p=>p.Category)
+            .Include(p=>p.Supplier)
+            .FirstOrDefaultAsync(p=>p.Id==id);
+        if (product == null) return NotFound();
+        var model = new ProductViewModel
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            SKU = product.SKU,
+            Price = product.Price,
+            ReorderLevel = product.ReorderLevel,
+            CategoryName = product.Category.Name,
+            SupplierName = product.Supplier.Name
+        };
+        return View(model);
+    }
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteProductConfirmed(int id)
+    {
+        var product =await context.Products
+            .Include(p=>p.Category)
+            .Include(p=>p.Supplier)
+            .FirstOrDefaultAsync(p=>p.Id==id);
+        if (product == null) return NotFound();
+        try
+        {
+            context.Products.Remove(product);
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return View(new ProductViewModel
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                SKU = product.SKU,
+                Price = product.Price,
+                ReorderLevel = product.ReorderLevel,
+                CategoryName = product.Category.Name,
+                SupplierName = product.Supplier.Name
+            });
         }
     }
     private async Task PopulateDropdowns(ProductViewModel model)
