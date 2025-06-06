@@ -147,10 +147,7 @@ public class ProductsController(ApplicationDbContext context) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteProductConfirmed(int id)
     {
-        var product =await context.Products
-            .Include(p=>p.Category)
-            .Include(p=>p.Supplier)
-            .FirstOrDefaultAsync(p=>p.Id==id);
+        var product =await context.Products.FirstOrDefaultAsync(p=>p.Id==id);
         if (product == null) return NotFound();
         try
         {
@@ -161,17 +158,80 @@ public class ProductsController(ApplicationDbContext context) : Controller
         catch (DbUpdateException ex)
         {
             ModelState.AddModelError("", ex.Message);
+            var fullproduct =await context.Products
+                .Include(p=>p.Category)
+                .Include(p=>p.Supplier)
+                .FirstOrDefaultAsync(p=>p.Id==id);
+            if (fullproduct == null) return NotFound();
             return View(new ProductViewModel
             {
-                Id = product.Id,
-                Name = product.Name,
-                Description = product.Description,
-                SKU = product.SKU,
-                Price = product.Price,
-                ReorderLevel = product.ReorderLevel,
-                CategoryName = product.Category.Name,
-                SupplierName = product.Supplier.Name
+                Id = fullproduct.Id,
+                Name = fullproduct.Name,
+                Description = fullproduct.Description,
+                SKU = fullproduct.SKU,
+                Price = fullproduct.Price,
+                ReorderLevel = fullproduct.ReorderLevel,
+                CategoryName = fullproduct.Category.Name,
+                SupplierName = fullproduct.Supplier.Name
             });
+        }
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var product =await context.Products
+            .Include(p=>p.Category)
+            .Include(p=>p.Supplier)
+            .FirstOrDefaultAsync(p=>p.Id==id);
+        if (product == null) return NotFound();
+        var model = new ProductViewModel
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            SKU = product.SKU,
+            Price = product.Price,
+            ReorderLevel = product.ReorderLevel,
+            SupplierId = product.SupplierId,
+            CategoryId = product.CategoryId
+        };
+        await PopulateDropdowns(model);
+        return View(model);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(ProductViewModel pvm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulateDropdowns(pvm);
+            return View(pvm);
+        }
+        var product =await context.Products
+            .FirstOrDefaultAsync(p=>p.Id==pvm.Id);
+        if (product == null) return NotFound();
+        try
+        {
+            product.Name = pvm.Name;
+            product.Description = pvm.Description;
+            product.SKU = pvm.SKU;
+            product.Price = pvm.Price;
+            product.ReorderLevel = pvm.ReorderLevel;
+            product.CategoryId = pvm.CategoryId;
+            product.SupplierId = pvm.SupplierId;
+            product.LastUpdated=DateTime.Now;
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("",ex.Message);
+            await PopulateDropdowns(pvm);
+            return View(pvm);
         }
     }
     private async Task PopulateDropdowns(ProductViewModel model)
