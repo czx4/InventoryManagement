@@ -68,7 +68,7 @@ public class ProductsController(ApplicationDbContext context) : Controller
             LastUpdated = product.LastUpdated,
             CategoryName = product.Category.Name,
             SupplierName = product.Supplier.Name,
-            Shipments = product.Shipments.Select(s=>new ShipmentViewModel
+            Shipments = product.Shipments.Select(s=>new ShipmentListViewModel
             {
                 Id = s.Id,
                 Quantity = s.Quantity,
@@ -158,21 +158,21 @@ public class ProductsController(ApplicationDbContext context) : Controller
         catch (DbUpdateException ex)
         {
             ModelState.AddModelError("", ex.Message);
-            var fullproduct =await context.Products
+            var fullProduct =await context.Products
                 .Include(p=>p.Category)
                 .Include(p=>p.Supplier)
                 .FirstOrDefaultAsync(p=>p.Id==id);
-            if (fullproduct == null) return NotFound();
+            if (fullProduct == null) return NotFound();
             return View(new ProductViewModel
             {
-                Id = fullproduct.Id,
-                Name = fullproduct.Name,
-                Description = fullproduct.Description,
-                SKU = fullproduct.SKU,
-                Price = fullproduct.Price,
-                ReorderLevel = fullproduct.ReorderLevel,
-                CategoryName = fullproduct.Category.Name,
-                SupplierName = fullproduct.Supplier.Name
+                Id = fullProduct.Id,
+                Name = fullProduct.Name,
+                Description = fullProduct.Description,
+                SKU = fullProduct.SKU,
+                Price = fullProduct.Price,
+                ReorderLevel = fullProduct.ReorderLevel,
+                CategoryName = fullProduct.Category.Name,
+                SupplierName = fullProduct.Supplier.Name
             });
         }
     }
@@ -234,6 +234,120 @@ public class ProductsController(ApplicationDbContext context) : Controller
             return View(pvm);
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> AddShipment(int id) //supplier id
+    {
+        var model = new ShipmentViewModel { SupplierId = id };
+        await PopulateShipmentDropdown(model);
+        return View(model);
+    }
+    
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddShipment(ShipmentViewModel svm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulateShipmentDropdown(svm);
+            return View(svm);
+        }
+        try
+        {
+            foreach (var item in svm.Shipments)
+            {
+                var shipment = new Shipment
+                {
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    ExpiryDate = item.ExpiryDate
+                };
+                context.Shipments.Add(shipment);
+            }
+            
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            ModelState.AddModelError("",ex.Message);
+            await PopulateShipmentDropdown(svm);
+            return View(svm);
+        }
+    }
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> EditShipment(int id)
+    {
+        var shipment =await context.Shipments.FindAsync(id);
+        if (shipment == null) return NotFound();
+        var model = new ShipmentItemViewModel
+        {
+            Id = shipment.Id,
+            Quantity = shipment.Quantity,
+            ExpiryDate = shipment.ExpiryDate
+        };
+        return View(model);
+    }
+    [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> EditShipment(ShipmentItemViewModel sivm)
+    {
+        if (!ModelState.IsValid) return View(sivm);
+        var shipment =await context.Shipments.FindAsync(sivm.Id);
+        if (shipment == null) return NotFound();
+        try
+        {
+            shipment.Quantity = sivm.Quantity;
+            shipment.ExpiryDate = sivm.ExpiryDate;
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("",ex.Message);
+            return View(sivm);
+        }
+    }
+    [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
+    public async Task<IActionResult> DeleteShipment(int id)
+    {
+        var shipment =await context.Shipments.FindAsync(id);
+        if (shipment == null) return NotFound();
+        var model = new ShipmentItemViewModel
+        {
+            Id = shipment.Id,
+            Quantity = shipment.Quantity,
+            ExpiryDate = shipment.ExpiryDate
+        };
+        return View(model);
+    }
+    [Authorize(Roles = "Admin,Manager")]
+    [HttpPost, ActionName("DeleteShipment")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteShipmentConfirmed(int id)
+    {
+        var shipment =await context.Shipments.FindAsync(id);
+        if (shipment == null) return NotFound();
+        try
+        {
+            context.Shipments.Remove(shipment);
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (DbUpdateException ex)
+        {
+            ModelState.AddModelError("", ex.Message);
+            return View(new ShipmentItemViewModel
+            {
+                Id = shipment.Id,
+                Quantity = shipment.Quantity,
+                ExpiryDate = shipment.ExpiryDate
+            });
+        }
+    }
     private async Task PopulateDropdowns(ProductViewModel model)
     {
         model.Categories = await context.Categories
@@ -241,6 +355,14 @@ public class ProductsController(ApplicationDbContext context) : Controller
             .ToListAsync();
         model.Suppliers = await context.Suppliers
             .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+            .ToListAsync();
+    }
+
+    private async Task PopulateShipmentDropdown(ShipmentViewModel model)
+    {
+        model.Products = await context.Products
+            .Where(p => p.SupplierId == model.SupplierId)
+            .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.Name })
             .ToListAsync();
     }
 }

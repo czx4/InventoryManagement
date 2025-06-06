@@ -1,39 +1,37 @@
-@model InventoryManagment.ViewModels.CategoryViewModel
+@model InventoryManagment.ViewModels.ShipmentItemViewModel
 
 @{
-    ViewBag.Title = "Delete Category";
+    ViewBag.Title = "Delete Shipment";
     Layout = "_Layout";
 }
 
-<h2>Delete Category</h2>
+<h2>Delete Shipment</h2>
 
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-<h3>Are you sure you want to delete this Category?</h3>
+<h3>Are you sure you want to delete this Shipment?</h3>
 <div>
     <table class="table table-striped">
         <thead>
         <tr>
             <th>Id</th>
-            <th>Name</th>
-            <th>Description</th>
+            <th>Quantity</th>
+            <th>Expiration date</th>
         </tr>
         </thead>
         <tbody>
         <tr>
             <td>@Model.Id</td>
-            <td>@Model.Name</td>
-            <td>@Model.Description</td>
+            <td>@Model.Quantity</td>
+            <td>@Model.ExpiryDate</td>
         </tr>
         </tbody>
     </table>
     <form asp-action="Delete" method="post">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete Category" class="btn btn-danger"
-               onclick="return confirm('Are you sure you want to delete this Category?');"/>
+        <input type="submit" value="Delete Shipment" class="btn btn-danger"
+               onclick="return confirm('Are you sure you want to delete this Shipment?');"/>
         <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
     </form>
 </div>
-
-

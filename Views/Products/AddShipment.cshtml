@@ -1,0 +1,85 @@
+@model InventoryManagment.ViewModels.ShipmentViewModel
+
+@{
+    ViewBag.Title = "Add Shipment";
+    Layout = "_Layout";
+}
+
+<h2>Add Shipment</h2>
+
+<form asp-action="AddShipment" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="SupplierId"/>
+
+    <div id="shipments-container">
+        @for (int i = 0; i < Model.Shipments.Count; i++)
+        {
+            <div class="shipment-item mb-3 border p-3 rounded">
+                <div class="mb-2">
+                    <label class="form-label">Product</label>
+                    <select name="Shipments[@i].ProductId" class="form-select">
+                        @foreach (var item in Model.Products!)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="Shipments[@i].Quantity" class="form-control"/>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" name="Shipments[@i].ExpiryDate" class="form-control"/>
+                </div>
+            </div>
+        }
+    </div>
+
+    <button type="button" id="add-shipment-btn" class="btn btn-secondary mt-2">Add Item</button>
+    <button type="submit" class="btn btn-primary mt-2">Submit</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+</form>
+
+<!-- Shipment Template -->
+<script type="text/html" id="shipment-template">
+    <div class="shipment-item mb-3 border p-3 rounded" id="Shipment__index__">
+        <div class="mb-2">
+            <label class="form-label">Product</label>
+            <select name="Shipments[__index__].ProductId" class="form-select">
+                @foreach (var item in Model.Products!)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Quantity</label>
+            <input type="number" name="Shipments[__index__].Quantity" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Expiry Date</label>
+            <input type="date" name="Shipments[__index__].ExpiryDate" class="form-control" />
+        </div>
+        <button type="button" onclick="remove('Shipment__index__')" class="btn btn-secondary mt-2">Remove</button>
+    </div>
+</script>
+
+<!-- JavaScript to add more shipment items -->
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        let shipmentIndex = @Model.Shipments.Count;
+
+        document.getElementById("add-shipment-btn").addEventListener("click", function () {
+            const template = document.getElementById("shipment-template").innerHTML;
+            const rendered = template.replace(/__index__/g, shipmentIndex);
+            document.getElementById("shipments-container").insertAdjacentHTML("beforeend", rendered);
+            shipmentIndex++;
+        });
+        function remove(id){
+            const element=document.getElementById(id); 
+            if (element) element.remove();
+        }
+    </script>
+}

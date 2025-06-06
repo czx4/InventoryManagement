@@ -28,9 +28,9 @@ public class ProductDetailsViewModel
     [Display(Name = "Supplier")]
     public string SupplierName { get; set; }
     
-    public IEnumerable<ShipmentViewModel> Shipments { get; set; } = new List<ShipmentViewModel>();
+    public IEnumerable<ShipmentListViewModel> Shipments { get; set; } = new List<ShipmentListViewModel>();
 }
-public class ShipmentViewModel
+public class ShipmentListViewModel
 {
     public int Id { get; set; }
     public int Quantity { get; set; }
