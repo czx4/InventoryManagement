@@ -61,7 +61,6 @@ public class SuppliersController(ApplicationDbContext context) : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(SupplierViewModel csvm)
     {
         if (!ModelState.IsValid) return View(csvm);
@@ -108,7 +107,6 @@ public class SuppliersController(ApplicationDbContext context) : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteSupplierConfirmed(int id)
     {
         var supplier =await context.Suppliers.FindAsync(id);
@@ -154,7 +152,6 @@ public class SuppliersController(ApplicationDbContext context) : Controller
 
     [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(SupplierViewModel svm)
     {
         if (!ModelState.IsValid) return View(svm);

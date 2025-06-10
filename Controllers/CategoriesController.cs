@@ -53,7 +53,6 @@ public class CategoriesController(ApplicationDbContext context) : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CategoryViewModel cvm)
     {
         if (!ModelState.IsValid) return View(cvm);
@@ -94,7 +93,6 @@ public class CategoriesController(ApplicationDbContext context) : Controller
 
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteCategoryConfirmed(int id)
     {
         var category =await context.Categories.FindAsync(id);
@@ -134,7 +132,6 @@ public class CategoriesController(ApplicationDbContext context) : Controller
 
     [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(CategoryViewModel cvm)
     {
         if (!ModelState.IsValid) return View(cvm);

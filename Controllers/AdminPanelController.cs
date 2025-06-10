@@ -42,7 +42,6 @@ public class AdminPanelController:Controller
         return View(model);
     }
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateUser(CreateUserViewModel createUserViewModel)
     {
         if (!ModelState.IsValid)
@@ -82,7 +81,6 @@ public class AdminPanelController:Controller
         return View(model);
     }
     [HttpPost,ActionName("DeleteUser")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteUserConfirmed(string id)
     {
         var deleteUser = await _userManager.FindByIdAsync(id);
@@ -125,7 +123,6 @@ public class AdminPanelController:Controller
     }
 
     [HttpPost,ActionName("EditUser")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditUserConfirm(EditUserViewModel editUserViewModel)
     {
         var updatedUser = await _userManager.FindByIdAsync(editUserViewModel.Id);

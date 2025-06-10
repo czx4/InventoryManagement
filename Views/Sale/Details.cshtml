@@ -1,0 +1,59 @@
+@model InventoryManagment.ViewModels.SaleViewModel
+
+@{
+    ViewBag.Title = "Sale Details";
+    Layout = "_Layout";
+}
+
+<h2>Sale Details</h2>
+
+<div class="mb-4">
+    <dl class="row">
+        <dt class="col-sm-3">Id</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+
+        <dt class="col-sm-3">Date of Sale</dt>
+        <dd class="col-sm-9">@Model.SaleDate</dd>
+
+        <dt class="col-sm-3">Total amount</dt>
+        <dd class="col-sm-9">@Model.TotalAmount</dd>
+
+        <dt class="col-sm-3">Created by</dt>
+        <dd class="col-sm-9">@Model.CreatedByUserName</dd>
+        
+    </dl>
+</div>
+
+<h4>Items in sale</h4>
+@if (Model.SaleLineItems != null && Model.SaleLineItems.Any())
+{
+<table class="table table-bordered">
+    <thead>
+    <tr>
+        <th>Product Name</th>
+        <th>Quantity</th>
+        <th>Unit price</th>
+        <th>Total price</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var saleline in Model.SaleLineItems)
+    {
+    <tr>
+        <td>@saleline.ProductName</td>
+        <td>@saleline.Quantity</td>
+        <td>@saleline.UnitPrice</td>
+        <td>@saleline.TotalPrice</td>
+    </tr>
+    }
+    </tbody>
+</table>
+}
+else
+{
+<p class="text-muted">No Products recorded.</p>
+}
+
+<a asp-action="Index" class="btn btn-secondary mt-3">Back to Sales</a>
+
+

@@ -1,0 +1,153 @@
+@model InventoryManagment.ViewModels.SaleViewModel
+
+@{
+    ViewBag.Title = "New Sale";
+    Layout = "_Layout";
+    var productPrices = ViewBag.ProductPrices as Dictionary<int, decimal>;
+}
+
+<h2>New Sale</h2>
+
+@if (ViewBag.ProductsNotAdded != null)
+{
+var notAdded = (List<string>)ViewBag.ProductsNotAdded;
+if (notAdded.Any())
+{
+<div class="alert alert-warning">
+    <strong>Warning:</strong> The following products were not added due to insufficient stock:
+    <ul>
+        @foreach (var product in notAdded)
+        {
+        <li>@product</li>
+        }
+    </ul>
+</div>
+}
+}
+
+<form asp-action="NewSale" method="post">
+    @Html.AntiForgeryToken()
+
+    <div id="items-container">
+        @for (int i = 0; i < Model.SaleLineItems.Count(); i++)
+        {
+            <div class="item-block mb-3 border p-3 rounded" id="Item_@i">
+                <div class="mb-2">
+                    <label class="form-label">Product</label>
+                    <select name="SaleLineItems[@i].ProductId" class="form-select product-select" data-index="@i">
+                        @foreach (var item in Model.SaleLineItems.ElementAt(i).Products)
+                        {
+                            <option value="@item.Value">
+                                @item.Text
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="SaleLineItems[@i].Quantity" class="form-control quantity-input" data-index="@i" value="@Model.SaleLineItems.ElementAt(i).Quantity" />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Unit Price</label>
+                    <input type="text" class="form-control unit-price" data-index="@i" readonly />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Total Price</label>
+                    <input type="text" class="form-control total-price" data-index="@i" readonly />
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="removeItem('Item_@i')">Remove</button>
+            </div>
+        }
+    </div>
+
+    <button type="button" id="add-item-btn" class="btn btn-outline-secondary mt-3">Add Item</button>
+    <button type="submit" class="btn btn-primary mt-3">Submit Sale</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3 ms-2">Cancel</a>
+</form>
+
+<!-- Item Template -->
+<script type="text/html" id="item-template">
+    <div class="item-block mb-3 border p-3 rounded" id="Item___index__">
+        <div class="mb-2">
+            <label class="form-label">Product</label>
+            <select name="SaleLineItems[__index__].ProductId" class="form-select product-select" data-index="__index__">
+                @foreach (var item in Model.SaleLineItems.First().Products)
+                {
+                    <option value="@item.Value">@item.Text</option>
+                }
+            </select>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Quantity</label>
+            <input type="number" name="SaleLineItems[__index__].Quantity" class="form-control quantity-input" data-index="__index__" />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Unit Price</label>
+            <input type="text" class="form-control unit-price" data-index="__index__" readonly />
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Total Price</label>
+            <input type="text" class="form-control total-price" data-index="__index__" readonly />
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="removeItem('Item___index__')">Remove</button>
+    </div>
+</script>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        const productPrices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(productPrices));
+        let itemIndex = @Model.SaleLineItems.Count();
+
+        function attachEventHandlers(index) {
+            const productSelect = document.querySelector(`[name='SaleLineItems[${index}].ProductId']`);
+            const quantityInput = document.querySelector(`[name='SaleLineItems[${index}].Quantity']`);
+
+            if (productSelect) {
+                productSelect.addEventListener('change', () => updatePrices(index));
+            }
+
+            if (quantityInput) {
+                quantityInput.addEventListener('input', () => updatePrices(index));
+            }
+        }
+
+        function updatePrices(index) {
+            const select = document.querySelector(`[name="SaleLineItems[${index}].ProductId"]`);
+            const quantityInput = document.querySelector(`[name="SaleLineItems[${index}].Quantity"]`);
+            const unitInput = document.querySelector(`.unit-price[data-index="${index}"]`);
+            const totalInput = document.querySelector(`.total-price[data-index="${index}"]`);
+
+            if (!select || !quantityInput || !unitInput || !totalInput) {
+                console.warn(`updatePrices: Element missing for index ${index}`);
+                return;
+            }
+
+            const productId = parseInt(select.value);
+            const quantity = parseInt(quantityInput.value) || 0;
+            const unitPrice = productPrices[productId] || 0;
+
+            unitInput.value = unitPrice.toFixed(2);
+            totalInput.value = (unitPrice * quantity).toFixed(2);
+        }
+        
+        document.getElementById("add-item-btn").addEventListener("click", function () {
+            const template = document.getElementById("item-template").innerHTML;
+            const rendered = template.replace(/__index__/g, itemIndex);
+            document.getElementById("items-container").insertAdjacentHTML("beforeend", rendered);
+            attachEventHandlers(itemIndex);
+            itemIndex++;
+        });
+
+        function removeItem(id) {
+            const element = document.getElementById(id);
+            if (element) element.remove();
+        }
+
+        // Initial trigger of unit price updates
+        for (let i = 0; i < itemIndex; i++) {
+            updatePrices(i);
+            attachEventHandlers(i);
+        }
+    </script>
+}

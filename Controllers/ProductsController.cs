@@ -89,7 +89,6 @@ public class ProductsController(ApplicationDbContext context) : Controller
     
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductViewModel pvm)
     {
         if (!ModelState.IsValid)
@@ -144,7 +143,6 @@ public class ProductsController(ApplicationDbContext context) : Controller
     }
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteProductConfirmed(int id)
     {
         var product =await context.Products.FirstOrDefaultAsync(p=>p.Id==id);
@@ -203,7 +201,6 @@ public class ProductsController(ApplicationDbContext context) : Controller
 
     [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(ProductViewModel pvm)
     {
         if (!ModelState.IsValid)
@@ -234,7 +231,7 @@ public class ProductsController(ApplicationDbContext context) : Controller
             return View(pvm);
         }
     }
-
+    
     [HttpGet]
     public async Task<IActionResult> AddShipment(int id) //supplier id
     {
@@ -245,7 +242,6 @@ public class ProductsController(ApplicationDbContext context) : Controller
     
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddShipment(ShipmentViewModel svm)
     {
         if (!ModelState.IsValid)
@@ -326,7 +322,6 @@ public class ProductsController(ApplicationDbContext context) : Controller
     }
     [Authorize(Roles = "Admin,Manager")]
     [HttpPost, ActionName("DeleteShipment")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteShipmentConfirmed(int id)
     {
         var shipment =await context.Shipments.FindAsync(id);

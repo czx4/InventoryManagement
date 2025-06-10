@@ -1,0 +1,65 @@
+@model List<InventoryManagment.ViewModels.SaleListViewModel>
+
+@{
+    ViewBag.Title = "Sales";
+    Layout = "_Layout";
+    var user = User;
+    var isManagerOrAdmin = user.IsInRole("Manager") || user.IsInRole("Admin");
+}
+
+<h2>Products</h2>
+
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search sales..." />
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </div>
+</form>
+
+<a asp-action="NewSale" class="btn btn-primary mb-3">Create New Sale</a>
+
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Sale Id</th>
+        <th>Date</th>
+        <th>Total Amount</th>
+        <th>Sale Made by</th>
+        <th>Products</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.SaleDate</td>
+            <td>@item.TotalAmount.ToString("C")</td>
+            <td>@item.CreatedByUserName</td>
+            <td>
+                @if (item.Products != null)
+                {
+                    foreach (var product in item.Products)
+                    {
+                        @product
+                        <span>, </span>
+                    }
+                }
+            </td>
+            <td>
+                <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                @if (isManagerOrAdmin)
+                {
+                    <span> | </span>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                    <span> | </span>
+                    <a asp-action="Delete" asp-route-id="@item.Id">Cancel Sale</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
