@@ -18,7 +18,9 @@ public class ProductsController(ApplicationDbContext context) : Controller
             .Include(p => p.Supplier)
             .Include(p => p.Shipments)
             .AsQueryable();
-
+        var suppliers = await context.Suppliers
+            .Select(s => new SelectListItem { Value = s.Id.ToString(), Text = s.Name })
+            .ToListAsync();
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(p =>
@@ -38,10 +40,11 @@ public class ProductsController(ApplicationDbContext context) : Controller
                 CategoryName = p.Category.Name,
                 SupplierName = p.Supplier.Name,
                 QuantityInStock = p.Shipments.Sum(s => s.Quantity),
-                IsLowStock=p.Shipments.Sum(s=>s.Quantity)<=p.ReorderLevel
+                IsLowStock=p.Shipments.Sum(s=>s.Quantity)<=p.ReorderLevel,
+                Suppliers=suppliers
             })
             .ToListAsync();
-
+        
         return View(products);
     }
 
@@ -233,9 +236,12 @@ public class ProductsController(ApplicationDbContext context) : Controller
     }
     
     [HttpGet]
-    public async Task<IActionResult> AddShipment(int id) //supplier id
+    public async Task<IActionResult> AddShipment(string? id) //supplier id
     {
-        var model = new ShipmentViewModel { SupplierId = id };
+        Console.Write(id);
+        if (id == null) return NotFound();
+        var supplierId = int.Parse(id);
+        var model = new ShipmentViewModel { SupplierId = supplierId };
         await PopulateShipmentDropdown(model);
         return View(model);
     }

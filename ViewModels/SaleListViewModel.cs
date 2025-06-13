@@ -1,6 +1,4 @@
 
-using Microsoft.AspNetCore.Mvc.Rendering;
-
 namespace InventoryManagment.ViewModels;
 
 public class SaleListViewModel

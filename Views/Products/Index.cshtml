@@ -6,6 +6,25 @@
     var user = User;
     var isManagerOrAdmin = user.IsInRole("Manager") || user.IsInRole("Admin");
 }
+<h2>To add shipment select supplier</h2>
+<table>
+    <tr>
+        <td>
+            <select name="Supplier" id="selectSupplier" class="form-select">
+                @foreach (var item in Model)
+                {
+                    foreach (var supplier in item.Suppliers)
+                    {
+                        <option class="supplierOpt" value="@supplier.Value">@supplier.Text</option>
+                    }
+                }
+            </select>
+        </td>
+        <td>
+            <a id="add-shipment-btn" href="#">Add Shipment</a>
+        </td>
+    </tr>
+</table>
 
 <h2>Products</h2>
 
@@ -68,3 +87,30 @@
     }
     </tbody>
 </table>
+<script>
+    const selectSupplier = document.getElementById("selectSupplier");
+    const addShipmentBtn = document.getElementById("add-shipment-btn");
+    const baseUrl = '@Url.Action("AddShipment")';
+
+    function updateShipmentLink() {
+        const selectedSupplierId = selectSupplier.value;
+
+        if (selectedSupplierId) {
+            addShipmentBtn.href = `${baseUrl}/${selectedSupplierId}`;
+            addShipmentBtn.classList.remove("disabled");
+        } else {
+            addShipmentBtn.href = "#";
+            addShipmentBtn.classList.add("disabled");
+        }
+    }
+
+    updateShipmentLink(); // initial
+    selectSupplier.addEventListener("change", updateShipmentLink);
+
+    addShipmentBtn.addEventListener("click", function (e) {
+        if (addShipmentBtn.classList.contains("disabled")) {
+            e.preventDefault(); // block navigation if not ready
+            alert("Please select a supplier before adding a shipment.");
+        }
+    });
+</script>

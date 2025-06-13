@@ -1,5 +1,6 @@
 
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace InventoryManagment.ViewModels;
 
@@ -17,4 +18,6 @@ public class ProductListViewModel
     [Display(Name = "Quantity in stock")]
     public int QuantityInStock { get; set; }
     public bool IsLowStock { get; set; }
+    
+    public IEnumerable<SelectListItem>? Suppliers { get; set; } = new List<SelectListItem>();
 }
