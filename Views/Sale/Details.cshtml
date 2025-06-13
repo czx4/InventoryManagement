@@ -16,7 +16,7 @@
         <dd class="col-sm-9">@Model.SaleDate</dd>
 
         <dt class="col-sm-3">Total amount</dt>
-        <dd class="col-sm-9">@Model.TotalAmount</dd>
+        <dd class="col-sm-9">@Model.TotalAmount.ToString("C")</dd>
 
         <dt class="col-sm-3">Created by</dt>
         <dd class="col-sm-9">@Model.CreatedByUserName</dd>
@@ -42,8 +42,8 @@
     <tr>
         <td>@saleline.ProductName</td>
         <td>@saleline.Quantity</td>
-        <td>@saleline.UnitPrice</td>
-        <td>@saleline.TotalPrice</td>
+        <td>@saleline.UnitPrice.ToString("C")</td>
+        <td>@saleline.TotalPrice.ToString("C")</td>
     </tr>
     }
     </tbody>

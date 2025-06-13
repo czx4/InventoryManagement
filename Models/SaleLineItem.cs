@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace InventoryManagment.Models;
@@ -13,7 +14,8 @@ public class SaleLineItem
     public int ProductId { get; set; }
     [ForeignKey(nameof(ProductId))]
     public Product Product { get; set; }
-    
+    [DataType(DataType.Date)]
+    public DateTime? ExpiryDate { get; set; }
     public int Quantity { get; set; }
     
     public decimal UnitPrice { get; set; }  // Price at time of sale

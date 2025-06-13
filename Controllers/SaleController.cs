@@ -90,6 +90,7 @@ public class SaleController(ApplicationDbContext context) : Controller
             await PopulateSaleDropdown(svm);
             return View(svm);
         }
+        await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
             var noproducts = new List<int>();
@@ -104,8 +105,8 @@ public class SaleController(ApplicationDbContext context) : Controller
             var productPrices = await context.Products
                 .Where(p => productIds.Contains(p.Id))
                 .ToDictionaryAsync(p => p.Id, p => p.Price);
-            
-            
+
+            var expiry = new Dictionary<int, DateTime?>();
             foreach (var product in svm.SaleLineItems )
             {
 
@@ -126,11 +127,13 @@ public class SaleController(ApplicationDbContext context) : Controller
                     {
                         shipment.Quantity -= quant;
                         quant = 0;
+                        if(!expiry.ContainsKey(shipment.ProductId)) expiry.Add(shipment.ProductId,shipment.ExpiryDate);
                     }
                     else
                     {
                         quant -= shipment.Quantity;
-                        context.Shipments.Remove(shipment);
+                        if(!expiry.ContainsKey(shipment.ProductId)) expiry.Add(shipment.ProductId,shipment.ExpiryDate);
+                        if(shipment.Quantity==0) context.Shipments.Remove(shipment);
                     }
                 }
                 
@@ -152,7 +155,8 @@ public class SaleController(ApplicationDbContext context) : Controller
                 {
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
-                    UnitPrice = productPrices[item.ProductId]
+                    UnitPrice = productPrices[item.ProductId],
+                    ExpiryDate = expiry.TryGetValue(item.ProductId, out var expiryDate) ? expiryDate : null
                 })
                 .ToList();
 
@@ -167,10 +171,19 @@ public class SaleController(ApplicationDbContext context) : Controller
             
             context.Sales.Add(sale);
             await context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return RedirectToAction("Index");
         }
         catch (Exception ex)
         {
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch (Exception rollbackex)
+            {
+                ModelState.AddModelError("",rollbackex.Message);
+            }
             ModelState.AddModelError("",ex.Message);
             await PopulateSaleDropdown(svm);
             return View(svm);
@@ -179,31 +192,96 @@ public class SaleController(ApplicationDbContext context) : Controller
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var model =await context.Sales.FirstAsync(s=>s.Id==id);
-        return View(model);
+        var model =await context.Sales
+            .AsNoTracking()
+            .Include(s => s.CreatedByUser)
+            .Include(sale => sale.SaleLineItems)
+            .ThenInclude(saleLineItem => saleLineItem.Product)
+            .FirstOrDefaultAsync(s=>s.Id==id);
+        if (model == null) return NotFound();
+        return View(new SaleViewModel
+        {
+            Id = model.Id,
+            SaleDate = model.SaleDate,
+            TotalAmount = model.TotalAmount,
+            CreatedByUserName = model.CreatedByUser?.UserName,
+            SaleLineItems = model.SaleLineItems.Select(sl=>new SaleLineItemViewModel
+            {
+                Id = sl.Id,
+                SaleId = sl.SaleId,
+                ProductName = sl.Product.Name,
+                ProductId = sl.ProductId,
+                Quantity = sl.Quantity,
+                UnitPrice = sl.UnitPrice,
+                TotalPrice = sl.TotalPrice
+            })
+        });
     }
 
     [HttpPost, ActionName("Delete")]
     public async Task<IActionResult> DeleteSaleConfirmed(int id)
     {
-        var sale =await context.Sales.Include(sale => sale.SaleLineItems).FirstAsync(s=>s.Id==id);
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        var sale =await context.Sales.Include(sale => sale.SaleLineItems)
+            .ThenInclude(saleLineItem => saleLineItem.Product).Include(sale => sale.CreatedByUser).FirstOrDefaultAsync(s=>s.Id==id);
         if (sale == null) return NotFound();
         try
         {
-            var product=sale.SaleLineItems.Select(sl => new { Id = sl.ProductId, Quant = sl.Quantity });
-            foreach (var saleItem in product)
+            var saleItems=sale.SaleLineItems.Select(sl => new { Id = sl.ProductId, Quant = sl.Quantity,Expiry=sl.ExpiryDate });
+            foreach (var saleItem in saleItems)
             {
-                var shipment=await context.Shipments.FirstAsync(sh => sh.ProductId == saleItem.Id);
-                shipment.Quantity += saleItem.Quant;  //todo in future add check if shipment for product exists and set the expiry date to correct one
+                var shipment = await context.Shipments
+                    .FirstOrDefaultAsync(sh => sh.ExpiryDate == saleItem.Expiry && sh.ProductId == saleItem.Id);
+
+                if (shipment == null)
+                {
+                    context.Shipments.Add(new Shipment
+                    {
+                        ProductId = saleItem.Id,
+                        Quantity = saleItem.Quant,
+                        ExpiryDate = saleItem.Expiry,
+                        ReceivedDate = DateTime.Now
+                    });
+                }
+                else
+                {
+                    shipment.Quantity += saleItem.Quant;  
+                }
+                
             }
             context.Sales.Remove(sale);
             await context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return RedirectToAction("Index");
         }
         catch (DbUpdateException ex)
         {
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch (Exception rollbackex)
+            {
+                ModelState.AddModelError("",rollbackex.Message);
+            }
             ModelState.AddModelError("", ex.Message);
-            return View(sale);
+            return View("Delete",new SaleViewModel
+            {
+                Id = sale.Id,
+                SaleDate = sale.SaleDate,
+                TotalAmount = sale.TotalAmount,
+                CreatedByUserName = sale.CreatedByUser?.UserName,
+                SaleLineItems = sale.SaleLineItems.Select(sl=>new SaleLineItemViewModel
+                {
+                    Id = sl.Id,
+                    SaleId = sl.SaleId,
+                    ProductName = sl.Product.Name,
+                    ProductId = sl.ProductId,
+                    Quantity = sl.Quantity,
+                    UnitPrice = sl.UnitPrice,
+                    TotalPrice = sl.TotalPrice
+                })
+            });
         }
     }
     private async Task PopulateSaleDropdown(SaleViewModel model)
