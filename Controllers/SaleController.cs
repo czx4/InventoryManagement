@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace InventoryManagment.Controllers;
+
 [Authorize]
 public class SaleController(ApplicationDbContext context) : Controller
 {
@@ -15,8 +17,8 @@ public class SaleController(ApplicationDbContext context) : Controller
     {
         var query = context.Sales
             .Include(s => s.CreatedByUser)
-            .Include(s=>s.SaleLineItems)
-                .ThenInclude(sl=>sl.Product)
+            .Include(s => s.SaleLineItems)
+            .ThenInclude(sl => sl.Product)
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -28,8 +30,8 @@ public class SaleController(ApplicationDbContext context) : Controller
                 s.TotalAmount.ToString().Contains(searchTerm) ||
                 s.SaleLineItems.Select(sl => sl.Product.Name).Contains(searchTerm));
         }
-        
-        var sales =await query
+
+        var sales = await query
             .OrderByDescending(s => s.SaleDate)
             .Select(s => new SaleListViewModel
             {
@@ -38,7 +40,7 @@ public class SaleController(ApplicationDbContext context) : Controller
                 TotalAmount = s.TotalAmount,
                 CreatedByUserName = s.CreatedByUser.UserName,
                 Products = s.SaleLineItems
-                    .Select(sl=>sl.Product.Name)
+                    .Select(sl => sl.Product.Name)
                     .ToList()
             })
             .ToListAsync();
@@ -48,12 +50,12 @@ public class SaleController(ApplicationDbContext context) : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        var sale =await context.Sales
+        var sale = await context.Sales
             .Include(s => s.CreatedByUser)
             .Include(s => s.SaleLineItems)
-            .FirstOrDefaultAsync(s=>s.Id==id);
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (sale == null) return NotFound();
-        
+
         var viewmod = new SaleViewModel
         {
             Id = sale.Id,
@@ -70,7 +72,7 @@ public class SaleController(ApplicationDbContext context) : Controller
                 Quantity = s.Quantity,
                 UnitPrice = s.UnitPrice,
                 TotalPrice = s.TotalPrice
-            }) 
+            })
         };
         return View(viewmod);
     }
@@ -82,19 +84,21 @@ public class SaleController(ApplicationDbContext context) : Controller
         await PopulateSaleDropdown(model);
         return View(model);
     }
+
     [HttpPost]
     public async Task<IActionResult> NewSale(SaleViewModel svm)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || svm.SaleLineItems.IsNullOrEmpty())
         {
             await PopulateSaleDropdown(svm);
             return View(svm);
         }
+
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
             var noproducts = new List<int>();
-            
+
             var productIds = svm.SaleLineItems.Select(sli => sli.ProductId).Distinct().ToList();
             var shipmentsByProduct = await context.Shipments
                 .Where(s => productIds.Contains(s.ProductId))
@@ -107,19 +111,20 @@ public class SaleController(ApplicationDbContext context) : Controller
                 .ToDictionaryAsync(p => p.Id, p => p.Price);
 
             var expiry = new Dictionary<int, DateTime?>();
-            foreach (var product in svm.SaleLineItems )
+            foreach (var product in svm.SaleLineItems)
             {
 
                 var quant = product.Quantity;
                 var prodId = product.ProductId;
                 var shipments = shipmentsByProduct.Where(s => s.ProductId == prodId).ToList();
-                
+
                 if (shipments.Sum(s => s.Quantity) < quant)
                 {
                     noproducts.Add(prodId);
                     continue;
                 }
-                foreach (var shipment in shipments) 
+
+                foreach (var shipment in shipments)
                 {
                     if (quant <= 0) break;
 
@@ -127,28 +132,30 @@ public class SaleController(ApplicationDbContext context) : Controller
                     {
                         shipment.Quantity -= quant;
                         quant = 0;
-                        if(!expiry.ContainsKey(shipment.ProductId)) expiry.Add(shipment.ProductId,shipment.ExpiryDate);
+                        if (!expiry.ContainsKey(shipment.ProductId))
+                            expiry.Add(shipment.ProductId, shipment.ExpiryDate);
                     }
                     else
                     {
                         quant -= shipment.Quantity;
-                        if(!expiry.ContainsKey(shipment.ProductId)) expiry.Add(shipment.ProductId,shipment.ExpiryDate);
-                        if(shipment.Quantity==0) context.Shipments.Remove(shipment);
+                        if (!expiry.ContainsKey(shipment.ProductId))
+                            expiry.Add(shipment.ProductId, shipment.ExpiryDate);
+                        if (shipment.Quantity == 0) context.Shipments.Remove(shipment);
                     }
                 }
-                
+
             }
 
             if (noproducts.Any())
             {
-                ViewBag.ProductsNotAdded= await context.Products
+                ViewBag.ProductsNotAdded = await context.Products
                     .Where(p => noproducts.Contains(p.Id))
                     .Select(p => p.Name)
                     .ToListAsync();
                 await PopulateSaleDropdown(svm);
                 return View(svm);
             }
-            
+
             var saleLineItems = svm.SaleLineItems
                 .Where(item => !noproducts.Contains(item.ProductId))
                 .Select(item => new SaleLineItem
@@ -168,7 +175,7 @@ public class SaleController(ApplicationDbContext context) : Controller
                 SaleLineItems = saleLineItems,
                 TotalAmount = totalAmount
             };
-            
+
             context.Sales.Add(sale);
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -182,22 +189,24 @@ public class SaleController(ApplicationDbContext context) : Controller
             }
             catch (Exception rollbackex)
             {
-                ModelState.AddModelError("",rollbackex.Message);
+                ModelState.AddModelError("", rollbackex.Message);
             }
-            ModelState.AddModelError("",ex.Message);
+
+            ModelState.AddModelError("", ex.Message);
             await PopulateSaleDropdown(svm);
             return View(svm);
         }
     }
+
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var model =await context.Sales
+        var model = await context.Sales
             .AsNoTracking()
             .Include(s => s.CreatedByUser)
             .Include(sale => sale.SaleLineItems)
             .ThenInclude(saleLineItem => saleLineItem.Product)
-            .FirstOrDefaultAsync(s=>s.Id==id);
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (model == null) return NotFound();
         return View(new SaleViewModel
         {
@@ -205,7 +214,7 @@ public class SaleController(ApplicationDbContext context) : Controller
             SaleDate = model.SaleDate,
             TotalAmount = model.TotalAmount,
             CreatedByUserName = model.CreatedByUser?.UserName,
-            SaleLineItems = model.SaleLineItems.Select(sl=>new SaleLineItemViewModel
+            SaleLineItems = model.SaleLineItems.Select(sl => new SaleLineItemViewModel
             {
                 Id = sl.Id,
                 SaleId = sl.SaleId,
@@ -222,12 +231,14 @@ public class SaleController(ApplicationDbContext context) : Controller
     public async Task<IActionResult> DeleteSaleConfirmed(int id)
     {
         await using var transaction = await context.Database.BeginTransactionAsync();
-        var sale =await context.Sales.Include(sale => sale.SaleLineItems)
-            .ThenInclude(saleLineItem => saleLineItem.Product).Include(sale => sale.CreatedByUser).FirstOrDefaultAsync(s=>s.Id==id);
+        var sale = await context.Sales.Include(sale => sale.SaleLineItems)
+            .ThenInclude(saleLineItem => saleLineItem.Product).Include(sale => sale.CreatedByUser)
+            .FirstOrDefaultAsync(s => s.Id == id);
         if (sale == null) return NotFound();
         try
         {
-            var saleItems=sale.SaleLineItems.Select(sl => new { Id = sl.ProductId, Quant = sl.Quantity,Expiry=sl.ExpiryDate });
+            var saleItems = sale.SaleLineItems.Select(sl => new
+                { Id = sl.ProductId, Quant = sl.Quantity, Expiry = sl.ExpiryDate });
             foreach (var saleItem in saleItems)
             {
                 var shipment = await context.Shipments
@@ -245,10 +256,11 @@ public class SaleController(ApplicationDbContext context) : Controller
                 }
                 else
                 {
-                    shipment.Quantity += saleItem.Quant;  
+                    shipment.Quantity += saleItem.Quant;
                 }
-                
+
             }
+
             context.Sales.Remove(sale);
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -262,16 +274,17 @@ public class SaleController(ApplicationDbContext context) : Controller
             }
             catch (Exception rollbackex)
             {
-                ModelState.AddModelError("",rollbackex.Message);
+                ModelState.AddModelError("", rollbackex.Message);
             }
+
             ModelState.AddModelError("", ex.Message);
-            return View("Delete",new SaleViewModel
+            return View("Delete", new SaleViewModel
             {
                 Id = sale.Id,
                 SaleDate = sale.SaleDate,
                 TotalAmount = sale.TotalAmount,
                 CreatedByUserName = sale.CreatedByUser?.UserName,
-                SaleLineItems = sale.SaleLineItems.Select(sl=>new SaleLineItemViewModel
+                SaleLineItems = sale.SaleLineItems.Select(sl => new SaleLineItemViewModel
                 {
                     Id = sl.Id,
                     SaleId = sl.SaleId,
@@ -284,12 +297,118 @@ public class SaleController(ApplicationDbContext context) : Controller
             });
         }
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var sale = await context.Sales
+            .Include(sale => sale.CreatedByUser)
+            .Include(sale => sale.SaleLineItems)
+            .ThenInclude(saleLineItem => saleLineItem.Product)
+            .FirstOrDefaultAsync(s => s.Id == id);
+        var products = context.Products;
+        if (sale == null) return NotFound();
+        var model = new SaleViewModel
+        {
+            Id = sale.Id,
+            SaleDate = sale.SaleDate,
+            TotalAmount = sale.TotalAmount,
+            CreatedByUserName = sale.CreatedByUser?.UserName,
+            SaleLineItems = sale.SaleLineItems.Select(sli => new SaleLineItemViewModel
+            {
+                Id = sli.Id,
+                SaleId = sli.SaleId,
+                ProductName = sli.Product.Name,
+                ProductId = sli.ProductId,
+                Quantity = sli.Quantity,
+                UnitPrice = sli.UnitPrice,
+                TotalPrice = sli.TotalPrice,
+                Products = products.Select(p => new SelectListItem
+                {
+                    Value = p.Id.ToString(),
+                    Text = p.Name
+                }).ToList()
+            })
+        };
+        return View(model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(SaleViewModel svm)
+    {
+        if (!ModelState.IsValid)
+        {
+            await PopulateSaleDropdown(svm);
+            return View(svm);
+        }
+
+        var sale = await context.Sales
+            .Include(sale => sale.SaleLineItems)
+            .FirstOrDefaultAsync(s => s.Id == svm.Id);
+        if (sale == null) return NotFound();
+        try
+        {
+            var itemsToRemove = sale.SaleLineItems
+                .Where(item => svm.SaleLineItems.All(sli => sli.Id != item.Id || sli.Quantity == 0))
+                .ToList();
+
+            foreach (var item in itemsToRemove)
+            {
+                sale.SaleLineItems.Remove(item);
+            }
+
+            foreach (var item in sale.SaleLineItems)
+            {
+                var modelItem = svm.SaleLineItems.FirstOrDefault(sl => sl.Id == item.Id);
+                if (modelItem == null) continue;
+
+                if (item.ProductId != modelItem.ProductId)
+                {
+
+                    
+                    var shipment = await context.Shipments
+                        .Where(sh => sh.ExpiryDate == item.ExpiryDate)
+                        .FirstOrDefaultAsync(sh => sh.ProductId == item.ProductId);
+                    if (shipment == null)
+                    {
+                        context.Shipments.Add(new Shipment
+                        {
+                            ProductId = item.ProductId,
+                            Quantity = item.Quantity,
+                            ExpiryDate = item.ExpiryDate,
+                        });
+                    }
+                    else
+                    {
+                        shipment.Quantity += (item.Quantity - modelItem.Quantity);
+                        RegulateShipments(item.ProductId, item.Quantity - modelItem.Quantity);
+                        RegulateShipments(modelItem.ProductId,modelItem.Quantity);
+                    }
+
+                }
+
+                item.Quantity = modelItem.Quantity;
+                item.UnitPrice = modelItem.UnitPrice;
+            }
+
+            sale.TotalAmount = sale.SaleLineItems.Sum(s => s.TotalPrice);
+            await context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+        catch (Exception e)
+        {
+            ModelState.AddModelError("", e.Message);
+            await PopulateSaleDropdown(svm);
+            return View(svm);
+        }
+    }
+
     private async Task PopulateSaleDropdown(SaleViewModel model)
     {
-        
+
         var products = await context.Products.ToListAsync();
-        ViewBag.ProductPrices=products.ToDictionary(p => p.Id, p => p.Price);
-        if(model.SaleLineItems==null||!model.SaleLineItems.Any())
+        ViewBag.ProductPrices = products.ToDictionary(p => p.Id, p => p.Price);
+        if (model.SaleLineItems == null || !model.SaleLineItems.Any())
         {
             model.SaleLineItems = new List<SaleLineItemViewModel>
             {
@@ -316,6 +435,41 @@ public class SaleController(ApplicationDbContext context) : Controller
                         Text = p.Name
                     }).ToList();
             }
+        }
+    }
+
+    private void RegulateShipments(int productId, int quantityChange)
+    {
+        var shipments = context.Shipments
+            .Where(sh => sh.ProductId == productId)
+            .OrderBy(sh => sh.ExpiryDate)
+            .ToList();
+
+        if (quantityChange == 0) return;
+
+        if (quantityChange < 0) // Deduct stock
+        {
+            int toDeduct = -quantityChange;
+
+            int available = shipments.Sum(s => s.Quantity);
+            if (available < toDeduct)
+                throw new Exception("Not enough stock to deduct");
+
+            foreach (var shipment in shipments)
+            {
+                if (toDeduct == 0) break;
+
+                int used = Math.Min(shipment.Quantity, toDeduct);
+                shipment.Quantity -= used;
+                toDeduct -= used;
+
+                if (shipment.Quantity == 0)
+                    context.Shipments.Remove(shipment);
+            }
+        }
+        else // Add stock
+        {
+            
         }
     }
 }
