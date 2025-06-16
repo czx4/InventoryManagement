@@ -3,6 +3,73 @@
 @{
     ViewBag.Title = "Edit Sale";
     Layout = "_Layout";
+
+    // Convert IEnumerable to List to allow indexing
+    var saleLineItemsList = Model.SaleLineItems?.ToList() ?? new List<InventoryManagment.ViewModels.SaleLineItemViewModel>();
 }
 
 <h2>Edit Sale</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" name="Id" value="@Model.Id" />
+
+    <div class="mb-3">
+        <label>Sale Date</label>
+        <input type="text" class="form-control" value="@Model.SaleDate.ToString("yyyy-MM-dd HH:mm")" readonly />
+    </div>
+
+    <div class="mb-3">
+        <label>Created By</label>
+        <input type="text" class="form-control" value="@Model.CreatedByUserName" readonly />
+    </div>
+
+    <hr />
+    <h4>Sale Line Items</h4>
+
+    @for (int i = 0; i < saleLineItemsList.Count; i++)
+    {
+        <div class="border rounded p-3 mb-3">
+            <input type="hidden" name="SaleLineItems[@i].Id" value="@saleLineItemsList[i].Id" />
+            <input type="hidden" name="SaleLineItems[@i].SaleId" value="@saleLineItemsList[i].SaleId" />
+
+            <div class="mb-2">
+                <label class="form-label" for="SaleLineItems_ProductId_@i">Product</label>
+                <select class="form-select" name="SaleLineItems[@i].ProductId" id="SaleLineItems_ProductId_@i">
+                    @foreach (var product in saleLineItemsList[i].Products)
+                    {
+                        <option value="@product.Value">
+                            @product.Text
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label" for="SaleLineItems_Quantity_@i">Quantity</label>
+                <input class="form-control" type="number" name="SaleLineItems[@i].Quantity" id="SaleLineItems_Quantity_@i" value="@saleLineItemsList[i].Quantity" />
+            </div>
+
+            <div class="mb-2">
+                <label class="form-label" for="SaleLineItems_UnitPrice_@i">Unit Price</label>
+                <input class="form-control" type="number" step="0.01" name="SaleLineItems[@i].UnitPrice" id="SaleLineItems_UnitPrice_@i" value="@saleLineItemsList[i].UnitPrice" />
+            </div>
+
+            <div class="mb-2">
+                <label>Total Price</label>
+                <input type="text" class="form-control" value="@saleLineItemsList[i].TotalPrice.ToString("F2")" readonly />
+            </div>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label>Total Amount</label>
+        <input type="text" class="form-control" value="@Model.TotalAmount.ToString("F2")" readonly />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

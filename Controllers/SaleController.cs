@@ -297,7 +297,7 @@ public class SaleController(ApplicationDbContext context) : Controller
             });
         }
     }
-
+    [Authorize(Roles = "Admin,Manager")]
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -334,6 +334,7 @@ public class SaleController(ApplicationDbContext context) : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> Edit(SaleViewModel svm)
     {
         if (!ModelState.IsValid)
@@ -354,6 +355,7 @@ public class SaleController(ApplicationDbContext context) : Controller
 
             foreach (var item in itemsToRemove)
             {
+                RegulateShipments(item.ProductId,item.Quantity,item.ExpiryDate);
                 sale.SaleLineItems.Remove(item);
             }
 
@@ -364,30 +366,41 @@ public class SaleController(ApplicationDbContext context) : Controller
 
                 if (item.ProductId != modelItem.ProductId)
                 {
-
-                    
-                    var shipment = await context.Shipments
-                        .Where(sh => sh.ExpiryDate == item.ExpiryDate)
-                        .FirstOrDefaultAsync(sh => sh.ProductId == item.ProductId);
-                    if (shipment == null)
+                    try
                     {
-                        context.Shipments.Add(new Shipment
-                        {
-                            ProductId = item.ProductId,
-                            Quantity = item.Quantity,
-                            ExpiryDate = item.ExpiryDate,
-                        });
+                        RegulateShipments(modelItem.ProductId, -modelItem.Quantity); // Deduct new product's stock
+                        RegulateShipments(item.ProductId, item.Quantity,item.ExpiryDate); // Return old product's stock
                     }
-                    else
+                    catch (Exception)
                     {
-                        shipment.Quantity += (item.Quantity - modelItem.Quantity);
-                        RegulateShipments(item.ProductId, item.Quantity - modelItem.Quantity);
-                        RegulateShipments(modelItem.ProductId,modelItem.Quantity);
+                        ModelState.AddModelError("", $"Not enough stock for product ID change to {modelItem.ProductId}");
+                        await PopulateSaleDropdown(svm);
+                        return View(svm);
                     }
-
+                    item.ProductId = modelItem.ProductId;
+                    item.Quantity = modelItem.Quantity;
+                    item.ExpiryDate = context.Shipments
+                        .Where(sh => sh.ProductId == modelItem.ProductId)
+                        .OrderBy(sh => sh.ExpiryDate)
+                        .Select(sh => sh.ExpiryDate)
+                        .FirstOrDefault();
                 }
-
-                item.Quantity = modelItem.Quantity;
+                else
+                {
+                    int quantityDelta = modelItem.Quantity - item.Quantity;
+                    try
+                    {
+                        RegulateShipments(item.ProductId, quantityDelta,item.ExpiryDate);
+                    }
+                    catch (Exception)
+                    {
+                        ModelState.AddModelError("",$"Not enough stock for product ID {item.ProductId}");
+                        await PopulateSaleDropdown(svm);
+                        return View(svm);
+                    }
+                    item.Quantity = modelItem.Quantity;
+                }
+                
                 item.UnitPrice = modelItem.UnitPrice;
             }
 
@@ -438,7 +451,7 @@ public class SaleController(ApplicationDbContext context) : Controller
         }
     }
 
-    private void RegulateShipments(int productId, int quantityChange)
+    private void RegulateShipments(int productId, int quantityChange,DateTime? expiry=null)
     {
         var shipments = context.Shipments
             .Where(sh => sh.ProductId == productId)
@@ -453,7 +466,7 @@ public class SaleController(ApplicationDbContext context) : Controller
 
             int available = shipments.Sum(s => s.Quantity);
             if (available < toDeduct)
-                throw new Exception("Not enough stock to deduct");
+                throw new Exception();
 
             foreach (var shipment in shipments)
             {
@@ -469,7 +482,21 @@ public class SaleController(ApplicationDbContext context) : Controller
         }
         else // Add stock
         {
-            
+            var addingShipment = shipments.FirstOrDefault(sh => sh.ExpiryDate == expiry);
+            if (addingShipment == null)
+            {
+                context.Shipments.Add(new Shipment
+                {
+                    ProductId = productId,
+                    Quantity = quantityChange,
+                    ExpiryDate = expiry
+                });
+            }
+            else
+            {
+                addingShipment.Quantity += quantityChange;
+            }
+
         }
     }
 }
