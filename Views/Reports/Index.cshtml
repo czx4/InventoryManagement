@@ -1,0 +1,80 @@
+@using Azure.Core
+@model InventoryManagment.ViewModels.FinancialViewModel
+
+@{
+    ViewBag.Title = "Financial Report";
+    Layout = "_Layout";
+}
+
+<h1>Financial Report</h1>
+
+<h2>Select from and to dates for filtering</h2>
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="date" name="searchStartDate" class="form-control" placeholder="From Date..."/>
+        <input type="date" name="searchEndDate" class="form-control" placeholder="To Date..." />
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+</form>
+
+@if (Model != null)
+{
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h4 class="card-title">Total Revenue</h4>
+        <p class="display-6 text-success"> @Model.TotalMoneyAmount.ToString("C")</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Top Sold Items</h5>
+                @if (Model.soldItems != null && Model.soldItems.Any())
+                {
+                <ul class="list-group">
+                    @foreach (var item in Model.soldItems)
+                    {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        @item.Key
+                        <span class="badge bg-secondary rounded-pill">@item.Value</span>
+                    </li>
+                    }
+                </ul>
+                }
+                else
+                {
+                <p class="text-muted">No items sold in this date range.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"> Sales by User</h5>
+                @if (Model.salesByUsers != null && Model.salesByUsers.Any())
+                {
+                <ul class="list-group">
+                    @foreach (var user in Model.salesByUsers)
+                    {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        @user.Key
+                        <span class="badge bg-info text-dark rounded-pill">
+                                        @user.Value.ToString("C")
+                        </span>
+                    </li>
+                    }
+                </ul>
+                }
+                else
+                {
+                <p class="text-muted">No sales made by users in this date range.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}
