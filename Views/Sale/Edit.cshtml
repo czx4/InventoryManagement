@@ -56,14 +56,14 @@
 
             <div class="mb-2">
                 <dt>Total Price</dt>
-                <dd>@saleLineItemsList[i].TotalPrice.ToString("F2")</dd> @* todo make it so that it updates real time in js*@
+                <dd class="total-price" data-index="@i">@saleLineItemsList[i].TotalPrice.ToString("F2")</dd>
             </div>
         </div>
     }
     
     <div class="mb-3">
         <dt>Total amount</dt>
-        <dd>@Model.TotalAmount.ToString("F2")</dd>
+        <dd id="total-amount">@Model.TotalAmount.ToString("F2")</dd>
     </div>
 
     <button type="submit" class="btn btn-primary">Save</button>
@@ -72,4 +72,51 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const itemCount = @saleLineItemsList.Count;
+
+            for (let i = 0; i < itemCount; i++) {
+                const quantityInput = document.querySelector(`[name="SaleLineItems[${i}].Quantity"]`);
+                const unitPriceInput = document.querySelector(`[name="SaleLineItems[${i}].UnitPrice"]`);
+
+                if (quantityInput && unitPriceInput) {
+                    quantityInput.addEventListener('input', () => updateTotal(i));
+                    unitPriceInput.addEventListener('input', () => updateTotal(i));
+                }
+            }
+
+            function updateTotal(index) {
+                const quantity = parseFloat(document.querySelector(`[name="SaleLineItems[${index}].Quantity"]`)?.value) || 0;
+                const unitPrice = parseFloat(document.querySelector(`[name="SaleLineItems[${index}].UnitPrice"]`)?.value) || 0;
+                const totalElement = document.querySelector(`.total-price[data-index="${index}"]`);
+
+                const lineTotal = (quantity * unitPrice).toFixed(2);
+
+                if (totalElement) {
+                    totalElement.textContent = lineTotal;
+                }
+
+                updateTotalAmount();
+            }
+
+            function updateTotalAmount() {
+                let grandTotal = 0;
+
+                for (let i = 0; i < itemCount; i++) {
+                    const quantity = parseFloat(document.querySelector(`[name="SaleLineItems[${i}].Quantity"]`)?.value) || 0;
+                    const unitPrice = parseFloat(document.querySelector(`[name="SaleLineItems[${i}].UnitPrice"]`)?.value) || 0;
+                    grandTotal += quantity * unitPrice;
+                }
+
+                const totalAmountElement = document.getElementById("total-amount");
+                if (totalAmountElement) {
+                    totalAmountElement.textContent = grandTotal.toFixed(2);
+                }
+            }
+        });
+        
+        
+    </script>
 }
+

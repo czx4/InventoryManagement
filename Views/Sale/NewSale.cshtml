@@ -94,7 +94,7 @@ if (notAdded.Any())
 </script>
 
 @section Scripts {
-    @await Html.PartialAsync("_ValidationScriptsPartial")
+    @await Html.PartialAsync("_ValidationScriptsPartial") 
     <script>
         const productPrices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(productPrices));
         let itemIndex = @Model.SaleLineItems.Count();
