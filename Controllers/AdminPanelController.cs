@@ -1,11 +1,11 @@
-using InventoryManagment.Models;
-using InventoryManagment.ViewModels;
+using Inventorymanagement.Models;
+using Inventorymanagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventoryManagment.Controllers;
+namespace Inventorymanagement.Controllers;
 
 [Authorize(Roles = "Admin,Manager")]
 public class AdminPanelController:Controller

@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using InventoryManagment.Models;
+using Inventorymanagement.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace InventoryManagment.Middleware;
+namespace Inventorymanagement.Middleware;
 
 public class PasswordChangeEnforcementMiddleware(RequestDelegate next)
 {

@@ -1,11 +1,11 @@
-@model InventoryManagment.ViewModels.SaleViewModel
+@model Inventorymanagement.ViewModels.SaleViewModel
 
 @{
     ViewBag.Title = "Edit Sale";
     Layout = "_Layout";
 
     // Convert IEnumerable to List to allow indexing
-    var saleLineItemsList = Model.SaleLineItems?.ToList() ?? new List<InventoryManagment.ViewModels.SaleLineItemViewModel>();
+    var saleLineItemsList = Model.SaleLineItems?.ToList() ?? new List<Inventorymanagement.ViewModels.SaleLineItemViewModel>();
 }
 
 <h2>Edit Sale</h2>

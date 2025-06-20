@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 using Microsoft.AspNetCore.Mvc.Rendering;
 
-namespace InventoryManagment.ViewModels;
+namespace Inventorymanagement.ViewModels;
 
 public class ShipmentItemViewModel
 {

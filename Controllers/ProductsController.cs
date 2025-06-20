@@ -1,12 +1,12 @@
-using InventoryManagment.Data;
-using InventoryManagment.Models;
-using InventoryManagment.ViewModels;
+using Inventorymanagement.Data;
+using Inventorymanagement.Models;
+using Inventorymanagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventoryManagment.Controllers;
+namespace Inventorymanagement.Controllers;
 [Authorize]
 public class ProductsController(ApplicationDbContext context) : Controller
 {

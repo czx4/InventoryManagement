@@ -1,4 +1,4 @@
-namespace InventoryManagment.ViewModels;
+namespace Inventorymanagement.ViewModels;
 
 public class FinancialViewModel
 {

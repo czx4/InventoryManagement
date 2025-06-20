@@ -4,8 +4,8 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <UserSecretsId>aspnet-InventoryManagment-7A0A4CCD-B8ED-4016-9FC7-040CA94F0324</UserSecretsId>
-        <RootNamespace>InventoryManagment</RootNamespace>
+        <UserSecretsId>aspnet-Inventorymanagement-7A0A4CCD-B8ED-4016-9FC7-040CA94F0324</UserSecretsId>
+        <RootNamespace>Inventorymanagement</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,6 +20,19 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4" />
         <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Data\Migrations\20250531201716_AddMustChangePassword.cs" />
+      <Compile Remove="Data\Migrations\20250531201716_AddMustChangePassword.Designer.cs" />
+      <Compile Remove="Data\Migrations\20250531203213_mustchangepasswordadd2.cs" />
+      <Compile Remove="Data\Migrations\20250531203213_mustchangepasswordadd2.Designer.cs" />
+      <Compile Remove="Data\Migrations\20250603164901_createdInventoryModels.cs" />
+      <Compile Remove="Data\Migrations\20250603164901_createdInventoryModels.Designer.cs" />
+      <Compile Remove="Data\Migrations\20250605163736_productscreatecompleted.cs" />
+      <Compile Remove="Data\Migrations\20250605163736_productscreatecompleted.Designer.cs" />
+      <Compile Remove="Data\Migrations\20250616195519_addededitsales.cs" />
+      <Compile Remove="Data\Migrations\20250616195519_addededitsales.Designer.cs" />
     </ItemGroup>
 
 </Project>

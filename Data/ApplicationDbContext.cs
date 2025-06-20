@@ -1,8 +1,8 @@
-﻿using InventoryManagment.Models;
+﻿using Inventorymanagement.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventoryManagment.Data;
+namespace Inventorymanagement.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {

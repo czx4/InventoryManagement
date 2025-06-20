@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace InventoryManagment.Models;
+namespace Inventorymanagement.Models;
 
 public class Sale
 {

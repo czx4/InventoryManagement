@@ -1,10 +1,10 @@
-using InventoryManagment.Data;
-using InventoryManagment.ViewModels;
+using Inventorymanagement.Data;
+using Inventorymanagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace InventoryManagment.Controllers;
+namespace Inventorymanagement.Controllers;
 [Authorize(Roles = "Admin,Manager")]
 public class ReportsController(ApplicationDbContext context) : Controller
 {

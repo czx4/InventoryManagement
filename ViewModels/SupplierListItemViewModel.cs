@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace InventoryManagment.ViewModels;
+namespace Inventorymanagement.ViewModels;
 
 public class SupplierListItemViewModel
 {

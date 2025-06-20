@@ -1,14 +1,14 @@
 using System.Security.Claims;
-using InventoryManagment.Data;
-using InventoryManagment.Models;
-using InventoryManagment.ViewModels;
+using Inventorymanagement.Data;
+using Inventorymanagement.Models;
+using Inventorymanagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
-namespace InventoryManagment.Controllers;
+namespace Inventorymanagement.Controllers;
 
 [Authorize]
 public class SaleController(ApplicationDbContext context) : Controller
