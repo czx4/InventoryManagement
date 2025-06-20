@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using InventoryManagment.Models;
 
 namespace InventoryManagment.ViewModels;
 

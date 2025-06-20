@@ -5,7 +5,7 @@ namespace InventoryManagment.Models;
 
 public class Product
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
     [Required]
     [StringLength(100)]
     public string Name { get; set; }

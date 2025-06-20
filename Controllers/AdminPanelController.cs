@@ -12,7 +12,7 @@ public class AdminPanelController:Controller
 {
     private readonly UserManager<ApplicationUser> _userManager;
     
-    public AdminPanelController(RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
+    public AdminPanelController(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
     }

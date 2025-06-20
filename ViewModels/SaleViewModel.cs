@@ -16,6 +16,7 @@ public class SaleLineItemViewModel
 {
     public int Id { get; set; }
     public int SaleId { get; set; }
+    [MaxLength(300)]
     public string? ProductName { get; set; }
     public int ProductId { get; set; }
     public int Quantity { get; set; }

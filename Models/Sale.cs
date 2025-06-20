@@ -4,7 +4,7 @@ namespace InventoryManagment.Models;
 
 public class Sale
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     public DateTime SaleDate { get; set; } = DateTime.UtcNow;
 

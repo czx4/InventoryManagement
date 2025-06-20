@@ -199,6 +199,7 @@ public class SaleController(ApplicationDbContext context) : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> Delete(int id)
     {
         var model = await context.Sales
@@ -228,6 +229,7 @@ public class SaleController(ApplicationDbContext context) : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> DeleteSaleConfirmed(int id)
     {
         await using var transaction = await context.Database.BeginTransactionAsync();
@@ -278,7 +280,7 @@ public class SaleController(ApplicationDbContext context) : Controller
             }
 
             ModelState.AddModelError("", ex.Message);
-            return View("Delete", new SaleViewModel
+            return View(new SaleViewModel
             {
                 Id = sale.Id,
                 SaleDate = sale.SaleDate,

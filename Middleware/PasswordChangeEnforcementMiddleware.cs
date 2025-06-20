@@ -4,15 +4,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace InventoryManagment.Middleware;
 
-public class PasswordChangeEnforcementMiddleware
+public class PasswordChangeEnforcementMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public PasswordChangeEnforcementMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task InvokeAsync(HttpContext context, UserManager<ApplicationUser> userManager)
     {
         // Check if user is authenticated
@@ -39,6 +32,6 @@ public class PasswordChangeEnforcementMiddleware
             }
         }
 
-        await _next(context);
+        await next(context);
     }
 }

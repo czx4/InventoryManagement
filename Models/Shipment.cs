@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Runtime.InteropServices.JavaScript;
 
 namespace InventoryManagment.Models;
 
 public class Shipment
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
     public int ProductId { get; set; }
     [ForeignKey(nameof(ProductId))]
     public Product Product { get; set; }

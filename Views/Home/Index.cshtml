@@ -1,8 +1,35 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewBag.Title = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1 class="display-4 mb-4">Welcome</h1>
+
+<h2 class="mb-3">Available actions</h2>
+
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    <div class="row row-cols-2 row-cols-md-3 g-3 text-center">
+        <div class="col">
+            <a class="btn btn-light border w-100 py-3" asp-action="Index" asp-controller="Suppliers">Suppliers</a>
+        </div>
+        <div class="col">
+            <a class="btn btn-light border w-100 py-3" asp-action="Index" asp-controller="Categories">Categories</a>
+        </div>
+        <div class="col">
+            <a class="btn btn-light border w-100 py-3" asp-action="Index" asp-controller="Products">Products</a>
+        </div>
+        <div class="col">
+            <a class="btn btn-light border w-100 py-3" asp-action="Index" asp-controller="Sale">Sales</a>
+        </div>
+        @if (User.IsInRole("Manager") || User.IsInRole("Admin"))
+        {
+            <div class="col">
+                <a class="btn btn-light border w-100 py-3" asp-action="Index" asp-controller="Reports">Reports</a>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <a class="btn btn-light border w-100 py-3" asp-area="Identity" asp-page="/Account/Login">Login</a>
+}

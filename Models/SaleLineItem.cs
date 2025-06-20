@@ -5,7 +5,7 @@ namespace InventoryManagment.Models;
 
 public class SaleLineItem
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     public int SaleId { get; set; }
     [ForeignKey(nameof(SaleId))]
